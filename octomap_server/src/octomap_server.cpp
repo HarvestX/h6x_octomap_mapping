@@ -623,11 +623,12 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
 {
   const auto start_time = rclcpp::Clock{}.now();
   const size_t octomap_size = octree_->size();
-  // TODO(someone): estimate num occ. voxels for size of arrays (reserve)
-  if (octomap_size <= 1) {
-    RCLCPP_WARN(get_logger(), "Nothing to publish, octree is empty");
-    return;
-  }
+  // HarvestX: commented the following lines out to force this node to publish the topic
+  // even if octomap is empty
+  //if (octomap_size <= 1) {
+  //  RCLCPP_WARN(get_logger(), "Nothing to publish, octree is empty");
+  //  return;
+  //}
 
   bool publish_free_marker_array_ = publish_free_space_ &&
     (latched_topics_ ||
