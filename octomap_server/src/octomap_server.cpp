@@ -309,7 +309,8 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
     std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
 
   using std::chrono_literals::operator""s;
-  point_cloud_sub_.subscribe(this, "cloud_in", rmw_qos_profile_sensor_data);
+  auto cloud_in_qos = rclcpp::QoS{10}.reliable().durability_volatile();
+  point_cloud_sub_.subscribe(this, "cloud_in", cloud_in_qos.get_rmw_qos_profile());
   tf_point_cloud_sub_ = std::make_shared<tf2_ros::MessageFilter<PointCloud2>>(
     point_cloud_sub_, *tf2_buffer_, world_frame_id_, 5, this->get_node_logging_interface(),
     this->get_node_clock_interface(), 5s);
