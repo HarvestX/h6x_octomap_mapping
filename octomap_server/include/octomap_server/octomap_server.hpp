@@ -41,6 +41,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/passthrough.h>
+#include <pcl/filters/voxel_grid.h>
 
 #include "rclcpp/rclcpp.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -296,6 +297,11 @@ protected:
   bool compress_map_;
 
   bool init_config_;
+
+  // Downsampling parameters for performance optimization
+  bool enable_downsampling_;
+  double downsample_voxel_size_;
+  double downsample_filter_field_limit_meter_;
 
   // downprojected 2D map:
   bool incremental_2D_projection_;

@@ -220,6 +220,31 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
       declare_parameter("incremental_2D_projection", false, incremental_2D_projection_desc);
   }
 
+  // Downsampling parameters for performance optimization
+  {
+    rcl_interfaces::msg::ParameterDescriptor enable_downsampling_desc;
+    enable_downsampling_desc.description =
+      "Enable point cloud downsampling to reduce CPU usage";
+    enable_downsampling_ = declare_parameter("enable_downsampling", false, enable_downsampling_desc);
+  }
+  {
+    rcl_interfaces::msg::ParameterDescriptor downsample_voxel_size_desc;
+    downsample_voxel_size_desc.description =
+      "Voxel size for downsampling filter.";
+    rcl_interfaces::msg::FloatingPointRange downsample_voxel_size_range;
+    downsample_voxel_size_range.from_value = 0.01;
+    downsample_voxel_size_range.to_value = 1.0;
+    downsample_voxel_size_desc.floating_point_range.push_back(downsample_voxel_size_range);
+    downsample_voxel_size_ =
+      declare_parameter("downsample_voxel_size", res_ * 2.0, downsample_voxel_size_desc);
+  }
+  {
+    rcl_interfaces::msg::ParameterDescriptor downsample_filter_field_limit_meter_desc;
+    downsample_filter_field_limit_meter_desc.description = "Downsample filter field limit in meters";
+    downsample_filter_field_limit_meter_ = 
+      declare_parameter("downsample_filter_field_limit_meter", 5.0, downsample_filter_field_limit_meter_desc);
+  }
+
   if (filter_ground_plane_ && (point_cloud_min_z_ > 0.0 || point_cloud_max_z_ < 0.0)) {
     RCLCPP_WARN_STREAM(
       get_logger(),
@@ -403,6 +428,64 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
   //
   PCLPointCloud pc;  // input cloud for filtering and ground-detection
   pcl::fromROSMsg(*cloud, pc);
+
+  // Apply voxel grid downsampling to faster processing
+  if (pc.size() == 0) {
+    RCLCPP_WARN(get_logger(), "Received empty point cloud, skipping insertion.");
+    return;
+  }
+  if (enable_downsampling_) {
+    PCLPointCloud pc_downsampled;
+
+    // Pre-filter to limit the point cloud within a certain range before downsampling
+    pcl::PassThrough<PCLPoint> pass_filter;
+    PCLPointCloud pc_filtered;
+    
+    // X-axis direction filtering
+    pass_filter.setInputCloud(pc.makeShared());
+    pass_filter.setFilterFieldName("x");
+    pass_filter.setFilterLimits(-this->downsample_filter_field_limit_meter_, this->downsample_filter_field_limit_meter_);
+    pass_filter.filter(pc_filtered);
+    
+    // Y-axis direction filtering
+    pass_filter.setInputCloud(pc_filtered.makeShared());
+    pass_filter.setFilterFieldName("y");
+    pass_filter.setFilterLimits(-this->downsample_filter_field_limit_meter_, this->downsample_filter_field_limit_meter_);
+    pass_filter.filter(pc_filtered);
+
+    // Z-axis direction filtering
+    pass_filter.setInputCloud(pc_filtered.makeShared());
+    pass_filter.setFilterFieldName("z");
+    pass_filter.setFilterLimits(-this->downsample_filter_field_limit_meter_, this->downsample_filter_field_limit_meter_);
+    pass_filter.filter(pc_filtered);
+
+    if (pc_filtered.size() == 0) {
+      RCLCPP_WARN(get_logger(), "Point cloud became empty after pre-filtering, skipping downsampling.");
+      return;
+    }
+
+    pcl::VoxelGrid<PCLPoint> voxel_filter;
+    voxel_filter.setInputCloud(pc_filtered.makeShared());
+    voxel_filter.setLeafSize(
+      downsample_voxel_size_,
+      downsample_voxel_size_,
+      downsample_voxel_size_);
+    voxel_filter.setMinimumPointsNumberPerVoxel(1);
+    try {
+      voxel_filter.filter(pc_downsampled);
+      RCLCPP_DEBUG(
+        get_logger(),
+        "Downsampled point cloud from %zu to %zu points",
+        pc.size(), pc_downsampled.size());
+      pc = pc_downsampled;
+    } catch (const std::exception & e) {
+      RCLCPP_ERROR_THROTTLE(
+        get_logger(),
+        *get_clock(),
+        5000,
+        "Downsampling failed with exception: %s. Using original point cloud.", e.what());
+    }
+  }
 
   geometry_msgs::msg::TransformStamped sensor_to_world_transform_stamped;
   try {
@@ -630,6 +713,9 @@ void OctomapServer::publishAll(const rclcpp::Time & rostime)
   //  RCLCPP_WARN(get_logger(), "Nothing to publish, octree is empty");
   //  return;
   //}
+
+  // To avoid unused variable warning if logging disabled
+  (void)octomap_size;  // to avoid unused variable warning if logging disabled
 
   bool publish_free_marker_array_ = publish_free_space_ &&
     (latched_topics_ ||
@@ -1364,6 +1450,9 @@ rcl_interfaces::msg::SetParametersResult OctomapServer::onParameter(
   update_param(parameters, "filter_ground_plane", filter_ground_plane_);
   update_param(parameters, "compress_map", compress_map_);
   update_param(parameters, "incremental_2D_projection", incremental_2D_projection_);
+  update_param(parameters, "enable_downsampling", enable_downsampling_);
+  update_param(parameters, "downsample_voxel_size", downsample_voxel_size_);
+  update_param(parameters, "downsample_filter_field_limit_meter", downsample_filter_field_limit_meter_);
   update_param(parameters, "ground_filter_distance", ground_filter_distance_);
   update_param(parameters, "ground_filter_angle", ground_filter_angle_);
   update_param(parameters, "ground_filter_plane_distance", ground_filter_plane_distance_);
