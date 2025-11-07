@@ -236,7 +236,7 @@ OctomapServer::OctomapServer(const rclcpp::NodeOptions & node_options)
     downsample_voxel_size_range.to_value = 1.0;
     downsample_voxel_size_desc.floating_point_range.push_back(downsample_voxel_size_range);
     downsample_voxel_size_ =
-      declare_parameter("downsample_voxel_size", res_ * 2.0, downsample_voxel_size_desc);
+      declare_parameter("downsample_voxel_size", res_ * 1.0, downsample_voxel_size_desc);
   }
   {
     rcl_interfaces::msg::ParameterDescriptor downsample_filter_field_limit_meter_desc;
