@@ -15,3 +15,7 @@
 octomap_server/docs
 octomap_server/cfg
 octomap_server/src/octomap_server
+
+.clang-tidy
+.clangd
+compile_commands.json

@@ -1,0 +1,33 @@
+{
+  "python.autoComplete.extraPaths": [
+    "/opt/ros/humble/lib/python3.8/site-packages",
+  ],
+  "python.analysis.extraPaths": [
+    "/opt/ros/humble/lib/python3.8/site-packages"
+  ],
+  "[cpp]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "zachflower.uncrustify"
+  },
+  "[xml]": {
+    "editor.tabSize": 2,
+    "editor.autoClosingBrackets": "always",
+    "files.trimFinalNewlines": true,
+    "editor.defaultFormatter": "redhat.vscode-xml",
+  },
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8",
+    "editor.formatOnSave": true,
+    "editor.tabSize": 4
+  },
+  "uncrustify.configPath.linux": ".vscode/uncrustify.cfg",
+  "editor.formatOnSave": true,
+  "files.associations": {
+    "*.repos": "yaml",
+    "*.cpp": "cpp",
+    "*.hpp": "cpp"
+  },
+  "cSpell.words": [
+    "Thres"
+  ],
+}

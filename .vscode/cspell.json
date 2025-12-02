@@ -1,0 +1,27 @@
+{
+  "language": "en",
+  "version": "0.2",
+  "words": [
+    "AABB",
+    "denoising",
+    "distro",
+    "downsample",
+    "downsampling",
+    "ffast",
+    "ftree",
+    "hmin",
+    "libopencv",
+    "mavx",
+    "octomap",
+    "octomaps",
+    "Octree",
+    "OPENCV",
+    "OPENMP",
+    "osrf",
+    "pointcloud",
+    "vectorizable",
+    "wsum",
+    "XYZRGB",
+    "zsum"
+  ]
+}
