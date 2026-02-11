@@ -407,8 +407,7 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
   geometry_msgs::msg::TransformStamped sensor_to_world_transform_stamped;
   try {
     sensor_to_world_transform_stamped = tf2_buffer_->lookupTransform(
-      world_frame_id_, cloud->header.frame_id, cloud->header.stamp,
-      rclcpp::Duration::from_seconds(1.0));
+      world_frame_id_, cloud->header.frame_id, cloud->header.stamp);
   } catch (const tf2::TransformException & ex) {
     RCLCPP_WARN(this->get_logger(), "%s", ex.what());
     return;
@@ -433,14 +432,11 @@ void OctomapServer::insertCloudCallback(const PointCloud2::ConstSharedPtr cloud)
     geometry_msgs::msg::TransformStamped base_to_world_transform_stamped;
     try {
       tf2_buffer_->canTransform(
-        base_frame_id_, cloud->header.frame_id, cloud->header.stamp,
-        rclcpp::Duration::from_seconds(0.2));
+        base_frame_id_, cloud->header.frame_id, cloud->header.stamp);
       sensor_to_base_transform_stamped = tf2_buffer_->lookupTransform(
-        base_frame_id_, cloud->header.frame_id, cloud->header.stamp,
-        rclcpp::Duration::from_seconds(1.0));
+        base_frame_id_, cloud->header.frame_id, cloud->header.stamp);
       base_to_world_transform_stamped = tf2_buffer_->lookupTransform(
-        world_frame_id_, base_frame_id_, cloud->header.stamp,
-        rclcpp::Duration::from_seconds(1.0));
+        world_frame_id_, base_frame_id_, cloud->header.stamp);
     } catch (const tf2::TransformException & ex) {
       RCLCPP_ERROR_STREAM(
         get_logger(),
